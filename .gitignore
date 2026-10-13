@@ -1,0 +1,18 @@
+# 应用、发布包、编译缓存和性能采样均为生成文件。
+build/
+dist/
+__pycache__/
+*.py[cod]
+.DS_Store
+.mimocode/
+
+# 每位开发者独立保存签名材料；不得提交私钥或账号凭据。
+Scripts/signing/
+*.key
+*.p12
+*.pfx
+*.p8
+*.pem
+.env
+.env.*
+*.log

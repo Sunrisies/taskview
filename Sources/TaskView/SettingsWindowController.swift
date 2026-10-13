@@ -171,8 +171,19 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         permissionCheckStatus.font = .systemFont(ofSize: 11)
         permissionCheckStatus.textColor = .secondaryLabelColor
         add(permissionCheckStatus)
-        hint("当前应用：\(Bundle.main.bundlePath)")
         hint("屏幕录制用于窗口截图，辅助功能用于精确聚焦。授权后可能需重启应用。")
+
+        heading("关于应用")
+        let buildDetails = NSTextField(wrappingLabelWithString: AppBuildInfo.current.details)
+        buildDetails.font = .systemFont(ofSize: 12)
+        buildDetails.isSelectable = true
+        add(buildDetails)
+        add(row([button("复制版本信息", #selector(copyBuildInfo)), NSView()]))
+    }
+
+    @objc private func copyBuildInfo() {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(AppBuildInfo.current.details, forType: .string)
     }
 
     private func refresh() {

@@ -18,7 +18,32 @@ if [[ "$#" -gt 1 ]]; then
     echo '用法：bash Scripts/publish_github.sh [--check-only] [--source-only] [发布目录]' >&2
     exit 1
 fi
-release_dir="${1:-dist/TaskView-1.0.0-beta.1-arm64}"
+if [[ "$#" -eq 1 ]]; then
+    release_dir="$1"
+else
+    # 根据当前应用的版本选附件；不固定旧版本，也不凭目录时间选包。
+    release_dir=$(python3 - <<'PY'
+import json
+import pathlib
+import plistlib
+
+app_info = pathlib.Path('build/TaskView.app/Contents/Info.plist')
+if not app_info.is_file():
+    raise SystemExit('请先运行 package_release.py 生成应用和发布附件，或明确传入发布目录。')
+info = plistlib.loads(app_info.read_bytes())
+matches = []
+for manifest_path in pathlib.Path('dist').glob('*/release-manifest.json'):
+    manifest = json.loads(manifest_path.read_text())
+    if (manifest.get('channel') == 'beta'
+            and manifest.get('version') == info.get('CFBundleShortVersionString')
+            and manifest.get('build') == info.get('CFBundleVersion')):
+        matches.append(manifest_path.parent)
+if len(matches) != 1:
+    raise SystemExit('当前应用必须对应一个 Beta 发布目录；请先打包，或明确传入要发布的目录。')
+print(matches[0])
+PY
+)
+fi
 
 # 限制提交范围，核对下载附件的完整性，拒绝包内凭据和不一致的元数据。
 tag=$(python3 - "$release_dir" <<'PY'

@@ -140,6 +140,7 @@ def main():
     try:
         if not args.existing:
             env = os.environ.copy()
+            env['TASKVIEW_BUILD_CHANNEL'] = args.channel
             if args.channel == 'stable':
                 env['TASKVIEW_DISTRIBUTION'] = 'developer-id'
             run(['bash', ROOT / 'Scripts/make_app.sh', 'release'], env=env)

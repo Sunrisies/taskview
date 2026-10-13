@@ -10,6 +10,11 @@ case "$CONFIG" in
 esac
 IDENTITY="${TASKVIEW_SIGNING_IDENTITY:-TaskView Local Signer}"
 DISTRIBUTION="${TASKVIEW_DISTRIBUTION:-local}"
+BUILD_CHANNEL="${TASKVIEW_BUILD_CHANNEL:-local}"
+case "$BUILD_CHANNEL" in
+    local|beta|stable) ;;
+    *) echo "TASKVIEW_BUILD_CHANNEL must be local, beta or stable." >&2; exit 2 ;;
+esac
 case "$DISTRIBUTION" in
     local|developer-id) ;;
     *) echo "TASKVIEW_DISTRIBUTION must be local or developer-id." >&2; exit 2 ;;
@@ -48,6 +53,25 @@ if [[ -n "${TASKVIEW_BUILD_NUMBER:-}" ]]; then
     [[ "$TASKVIEW_BUILD_NUMBER" =~ ^[0-9]+$ ]] || { echo "构建号应为整数。" >&2; exit 2; }
     /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $TASKVIEW_BUILD_NUMBER" "$APP/Contents/Info.plist"
 fi
+# 在签名前记录构建信息；后续不能直接修改已签名应用的 plist。
+python3 - "$APP/Contents/Info.plist" "$BUILD_CHANNEL" <<'PY'
+import datetime
+import plistlib
+import subprocess
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+info = plistlib.loads(path.read_bytes())
+info['TaskViewBuildChannel'] = sys.argv[2]
+info['TaskViewBuildDate'] = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='seconds')
+revision = subprocess.run(['git', 'rev-parse', '--short=12', 'HEAD'], capture_output=True, text=True)
+if revision.returncode == 0:
+    info['TaskViewSourceRevision'] = revision.stdout.strip()
+    status = subprocess.run(['git', 'status', '--porcelain'], capture_output=True, text=True)
+    info['TaskViewSourceDirty'] = status.returncode != 0 or bool(status.stdout.strip())
+path.write_bytes(plistlib.dumps(info))
+PY
 SIGN_FLAGS=(--force --sign "$IDENTITY")
 if [[ "$DISTRIBUTION" == developer-id ]]; then
     SIGN_FLAGS+=(--options runtime --timestamp)

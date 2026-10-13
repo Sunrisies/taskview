@@ -34,7 +34,7 @@ build/tests/WindowCloseTests
 if [[ "${1:-}" == "--ui" ]]; then
     swiftc -sdk "$(xcrun --show-sdk-path)" -target arm64-apple-macos14.0 \
         -swift-version 5 -module-cache-path "$PWD/build/ModuleCache" \
-        Sources/TaskView/AppSettings.swift Sources/TaskView/LoginItemController.swift \
+        Sources/TaskView/AppSettings.swift Sources/TaskView/AppBuildInfo.swift Sources/TaskView/LoginItemController.swift \
         Sources/TaskView/Permissions.swift Sources/TaskView/SettingsWindowController.swift \
         Sources/TaskView/GlobalHotKey.swift \
         Tests/TestSupport.swift Tests/SettingsUITests.swift -o build/tests/SettingsUITests

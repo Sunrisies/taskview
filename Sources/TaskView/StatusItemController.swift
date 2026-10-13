@@ -7,6 +7,7 @@ final class StatusItemController: NSObject {
     private let onShow: () -> Void
     private let onQuit: () -> Void
     private let onSettings: () -> Void
+    private let buildInfo = AppBuildInfo.current
 
     init(onShow: @escaping () -> Void, onSettings: @escaping () -> Void, onQuit: @escaping () -> Void) {
         self.onShow = onShow
@@ -57,6 +58,10 @@ final class StatusItemController: NSObject {
 
         menu.addItem(.separator())
 
+        let aboutItem = NSMenuItem(title: "关于任务视图…", action: #selector(showAbout), keyEquivalent: "")
+        aboutItem.target = self
+        menu.addItem(aboutItem)
+
         let quitItem = NSMenuItem(title: "退出任务视图",
                                   action: #selector(quit),
                                   keyEquivalent: "q")
@@ -86,5 +91,19 @@ final class StatusItemController: NSObject {
 
     @objc private func quit() {
         onQuit()
+    }
+
+    @objc private func showAbout() {
+        // 显示本进程的信息；复制后可直接用于反馈问题。
+        let alert = NSAlert()
+        alert.messageText = "任务视图 TaskView"
+        alert.informativeText = buildInfo.details
+        alert.addButton(withTitle: "关闭")
+        alert.addButton(withTitle: "复制信息")
+        NSApp.activate(ignoringOtherApps: true)
+        if alert.runModal() == .alertSecondButtonReturn {
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(buildInfo.details, forType: .string)
+        }
     }
 }
